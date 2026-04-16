@@ -67,9 +67,9 @@ Then open the URL Vite prints (usually `http://localhost:5173`).
 - `src/utils/usdRateTickerOptions.js`: turns the Coinbase map into stable dropdown options
 - `src/components/MajorAllocationCard.vue`: re-usable compononent “card” UI for each allocation side
 
-## Notes / caveats (worth saying out loud in a panel)
+## Notes / caveats
 
-- **Public API + browser fetch**: this is fine for a demo, but a production app would usually proxy our own backend for reliability, possible caching, attribution, and clearer error handling.
+- **Public API + browser fetch**: this is fine for a demo, but a production app would usually proxy our own backend for reliability, possible caching, rate limiting, and clearer error handling.
 - **Ticker lists can be huge**: the UI is a plain `<select>` right now. That’s simple, but for “real product UX”, the next step would be a search filter. At first, I was going to filter for only majors, but that's not ideal for a production app.
 
 
