@@ -59,50 +59,83 @@ const ethAmount = computed(() => {
 </script>
 
 <template>
-  <main>
-    <h1>Asset allocation calculator</h1>
+  <main class="page">
+    <section class="panel" aria-label="Asset allocation calculator">
+      <header class="panel__header">
+        <div class="panel__title">
+          <h1>Asset allocation calculator</h1>
+          <p class="muted">
+            Enter a USD amount. This splits it 70% BTC and 30% ETH using Coinbase exchange rates.
+          </p>
+        </div>
+      </header>
 
-    <section>
-      <label for="usd-input">Investable assets (USD)</label>
-      <input
-        id="usd-input"
-        v-model="usdInput"
-        type="text"
-        inputmode="decimal"
-        autocomplete="off"
-      />
-      <p v-if="showInputError" class="input-error">
-        {{ inputErrorMessage }}
-      </p>
-    </section>
+      <section class="field">
+        <label class="field__label" for="usd-input">AMOUNT TO ALLOCATE (USD)</label>
+        <div class="money-input">
+          <span class="money-input__prefix">$</span>
+          <input
+            id="usd-input"
+            v-model="usdInput"
+            class="money-input__control"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            placeholder="0.00"
+            :aria-invalid="showInputError ? 'true' : 'false'"
+          />
+        </div>
+        <p v-if="showInputError" class="help help--error">
+          {{ inputErrorMessage }}
+        </p>
+        <p v-else class="help muted">Rates refresh automatically in the background.</p>
+      </section>
 
-    <section aria-label="Rates status">
-      <p v-if="isLoading" class="status-text">Loading live rates…</p>
-      <p v-else-if="errorMessage" class="status-text status-error">
-        Could not load live rates: {{ errorMessage }}
-      </p>
-    </section>
+      <section class="cards" aria-label="Allocation outputs">
+        <article class="card">
+          <div class="card__top">
+            <div>
+              <div class="card__kicker">BITCOIN</div>
+              <div class="card__symbol">BTC</div>
+            </div>
+            <div class="chip chip--btc">70%</div>
+          </div>
 
-    <section>
-      <div>
-        <label for="btc-output">70% BTC allocation</label>
-        <input
-          id="btc-output"
-          type="text"
-          :value="canCalculate ? formatCrypto(btcAmount, 8) : ''"
-          readonly
-        />
-      </div>
+          <div class="card__value">
+            {{ canCalculate ? formatCrypto(btcAmount, 8) : '0.00000000' }}
+          </div>
+          <div class="card__meta muted">
+            Rate:
+            <span v-if="btcRate != null">1 USD = {{ formatCrypto(btcRate, 10) }} BTC</span>
+            <span v-else>—</span>
+          </div>
+        </article>
 
-      <div>
-        <label for="eth-output">30% ETH allocation</label>
-        <input
-          id="eth-output"
-          type="text"
-          :value="canCalculate ? formatCrypto(ethAmount, 6) : ''"
-          readonly
-        />
-      </div>
+        <article class="card">
+          <div class="card__top">
+            <div>
+              <div class="card__kicker">ETHEREUM</div>
+              <div class="card__symbol">ETH</div>
+            </div>
+            <div class="chip chip--eth">30%</div>
+          </div>
+
+          <div class="card__value">
+            {{ canCalculate ? formatCrypto(ethAmount, 6) : '0.000000' }}
+          </div>
+          <div class="card__meta muted">
+            Rate:
+            <span v-if="ethRate != null">1 USD = {{ formatCrypto(ethRate, 10) }} ETH</span>
+            <span v-else>—</span>
+          </div>
+        </article>
+      </section>
+
+      <footer class="panel__footer muted">
+        <span v-if="isLoading">Updating rates…</span>
+        <span v-else-if="errorMessage">Could not load rates: {{ errorMessage }}</span>
+        <span v-else>Rates update roughly every 45 seconds.</span>
+      </footer>
     </section>
   </main>
 </template>
