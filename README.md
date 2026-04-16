@@ -36,6 +36,7 @@ This is an **asset allocation calculator** with a very specific job:
 - **Guards**:
   - If you pick the **same ticker twice**, the UI warns you and the calculator won’t run until you pick two distinct tickers.
   - If rates fail transiently, the app tries to keep the last good snapshot so the UI doesn’t “blink” empty.
+- **Styling**: Tailwind CSS for quick iteration and clean, readable UI classes (wired via the Vite plugin in `vite.config.js`, with Tailwind imported from `src/style.css`).
 
 ## Local development
 
