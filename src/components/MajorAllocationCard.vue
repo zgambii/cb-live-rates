@@ -21,7 +21,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
-  assets: {
+  options: {
     type: Array,
     required: true,
   },
@@ -67,12 +67,11 @@ const selectRingClass =
           @change="emit('update:modelValue', $event.target.value)"
         >
           <option
-            v-for="asset in assets"
-            :key="`${percent}-${asset.ticker}`"
-            :value="asset.ticker"
-            :disabled="!asset.available"
+            v-for="option in options"
+            :key="`${percent}-${option.ticker}`"
+            :value="option.ticker"
           >
-            {{ asset.ticker }}{{ asset.available ? '' : ' (unavailable)' }}
+            {{ option.ticker }}
           </option>
         </select>
       </div>

@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { useExchangeRates } from './composables/useExchangeRates'
 import { parseUsd, formatCrypto } from './utils/numberUtils'
+import { buildUsdCryptoTickerOptions } from './utils/usdRateTickerOptions'
 import MajorAllocationCard from './components/MajorAllocationCard.vue'
 
 // Raw allocation input from the user as a string
@@ -19,17 +20,7 @@ function rateFor(ticker) {
   return Number.isFinite(unitsPerOneUsd) ? unitsPerOneUsd : null
 }
 
-const assetOptions = computed(() => {
-  const rates = usdRates.value || {}
-  return Object.keys(rates)
-    .map((ticker) => String(ticker).toUpperCase())
-    .filter((ticker) => ticker && ticker !== 'USD') // Filter out USD
-    .sort((tickerA, tickerB) => tickerA.localeCompare(tickerB))
-    .map((ticker) => ({
-      ticker,
-      available: Number.isFinite(rates[ticker]),
-    }))
-})
+const assetSelectOptions = computed(() => buildUsdCryptoTickerOptions(usdRates.value))
 
 // ----- Derived state -----
 const parsed = computed(() => parseUsd(usdInput.value))
@@ -173,7 +164,7 @@ const rateText30 = computed(() =>
           input-id="asset-70"
           label="70% asset"
           v-model="asset70"
-          :assets="assetOptions"
+          :options="assetSelectOptions"
           :amount-text="amountText70"
           :rate-text="rateText70"
         />
@@ -184,7 +175,7 @@ const rateText30 = computed(() =>
           input-id="asset-30"
           label="30% asset"
           v-model="asset30"
-          :assets="assetOptions"
+          :options="assetSelectOptions"
           :amount-text="amountText30"
           :rate-text="rateText30"
         />

@@ -1,4 +1,5 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { buildUsdCryptoTickerOptions } from '../utils/usdRateTickerOptions'
 
 export function useExchangeRates(selection) {
   // Coinbase returns USD->crypto rates as "units of crypto per 1 USD".
@@ -13,10 +14,9 @@ export function useExchangeRates(selection) {
   let intervalId = null
 
   function syncAssetSelectionsToRateMap(ratesByTicker) {
-    const tickersFromCoinbase = Object.keys(ratesByTicker || {})
-      .map((ticker) => String(ticker).toUpperCase())
-      .filter((ticker) => ticker && ticker !== 'USD')
-      .sort((tickerA, tickerB) => tickerA.localeCompare(tickerB))
+    const tickersFromCoinbase = buildUsdCryptoTickerOptions(ratesByTicker).map(
+      (option) => option.ticker
+    )
 
     if (tickersFromCoinbase.length === 0) return
 
