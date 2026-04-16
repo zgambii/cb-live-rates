@@ -26,6 +26,8 @@ This is an **asset allocation calculator** with a very specific job:
 - The app allocates **70% of the USD** to the first ticker and **30%** to the second
 - It converts those USD portions into crypto amounts using Coinbase’s **“units of asset per 1 USD”** values from the exchange-rates response
 
+![Asset allocation calculator screenshot](assets/app-screenshot.png)
+
 
 ## How it works (the mental model)
 
