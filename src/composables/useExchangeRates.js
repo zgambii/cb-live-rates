@@ -1,10 +1,9 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 export function useExchangeRates() {
-  // Rates from Coinbase are "units of crypto per 1 USD".
+  // Coinbase returns USD->crypto rates as "units of crypto per 1 USD".
   // Example: BTC=0.00001 means $1 buys 0.00001 BTC.
-  const btcRate = ref(null)
-  const ethRate = ref(null)
+  const usdRates = ref({})
   const isLoading = ref(false)
   const errorMessage = ref('')
 
@@ -26,21 +25,28 @@ export function useExchangeRates() {
       const json = await res.json()
       const rates = json?.data?.rates || {}
 
-      const btc = Number(rates.BTC)
-      const eth = Number(rates.ETH)
-
-      if (!Number.isFinite(btc) || !Number.isFinite(eth)) {
-        throw new Error('Missing BTC or ETH rate')
+      const ratesByTicker = {}
+      for (const [ticker, rawRate] of Object.entries(rates)) {
+        const tickerUpper = String(ticker).toUpperCase()
+        const unitsPerOneUsd = Number(rawRate)
+        if (Number.isFinite(unitsPerOneUsd) && unitsPerOneUsd > 0) {
+          ratesByTicker[tickerUpper] = unitsPerOneUsd
+        }
       }
 
-      btcRate.value = btc
-      ethRate.value = eth
+      if (Object.keys(ratesByTicker).length === 0) {
+        throw new Error('No rates returned')
+      }
+
+      usdRates.value = ratesByTicker
     } catch (e) {
-      // Treat any failure as "no usable rates" and let the UI show blanks.
       errorMessage.value =
         e instanceof Error ? e.message : 'Failed to load rates'
-      btcRate.value = null
-      ethRate.value = null
+
+      // If we already have rates, keep showing the last good snapshot on transient failures.
+      if (Object.keys(usdRates.value || {}).length === 0) {
+        usdRates.value = {}
+      }
     } finally {
       isLoading.value = false
     }
@@ -61,8 +67,7 @@ export function useExchangeRates() {
   })
 
   return {
-    btcRate,
-    ethRate,
+    usdRates,
     isLoading,
     errorMessage,
     fetchRates,
