@@ -59,25 +59,40 @@ const ethAmount = computed(() => {
 </script>
 
 <template>
-  <main class="page">
-    <section class="panel" aria-label="Asset allocation calculator">
-      <header class="panel__header">
-        <div class="panel__title">
-          <h1>Asset allocation calculator</h1>
-          <p class="muted">
+  <main
+    class="flex min-h-dvh items-center justify-center bg-slate-100 px-4 py-8 text-slate-900 antialiased"
+  >
+    <section
+      class="mx-auto w-full max-w-3xl rounded-2xl border border-slate-200 bg-white p-6 shadow-[0_18px_50px_rgba(15,23,42,0.10)] ring-1 ring-slate-900/5 sm:p-8"
+      aria-label="Asset allocation calculator"
+    >
+      <header class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
+            Asset allocation calculator
+          </h1>
+          <p class="mt-2 text-sm text-slate-600">
             Enter a USD amount. This splits it 70% BTC and 30% ETH using Coinbase exchange rates.
           </p>
         </div>
       </header>
 
-      <section class="field">
-        <label class="field__label" for="usd-input">AMOUNT TO ALLOCATE (USD)</label>
-        <div class="money-input">
-          <span class="money-input__prefix">$</span>
+      <section class="mt-6 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+        <label
+          class="block text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500"
+          for="usd-input"
+        >
+          AMOUNT TO ALLOCATE (USD)
+        </label>
+
+        <div
+          class="mt-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+        >
+          <span class="text-base font-semibold text-amber-700">$</span>
           <input
             id="usd-input"
             v-model="usdInput"
-            class="money-input__control"
+            class="w-full bg-transparent text-3xl tracking-tight text-slate-900 placeholder:text-slate-400 focus:outline-none"
             type="text"
             inputmode="decimal"
             autocomplete="off"
@@ -85,53 +100,70 @@ const ethAmount = computed(() => {
             :aria-invalid="showInputError ? 'true' : 'false'"
           />
         </div>
-        <p v-if="showInputError" class="help help--error">
+
+        <p v-if="showInputError" class="mt-2 text-sm text-red-700">
           {{ inputErrorMessage }}
         </p>
-        <p v-else class="help muted">Rates refresh automatically in the background.</p>
+        <p v-else class="mt-2 text-sm text-slate-600">
+          Rates refresh automatically in the background.
+        </p>
       </section>
 
-      <section class="cards" aria-label="Allocation outputs">
-        <article class="card">
-          <div class="card__top">
+      <section class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Allocation outputs">
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
             <div>
-              <div class="card__kicker">BITCOIN</div>
-              <div class="card__symbol">BTC</div>
+              <div class="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
+                BITCOIN
+              </div>
+              <div class="mt-1 text-base font-semibold text-slate-900">BTC</div>
             </div>
-            <div class="chip chip--btc">70%</div>
+            <div
+              class="rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900"
+            >
+              70%
+            </div>
           </div>
 
-          <div class="card__value">
+          <div class="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
             {{ canCalculate ? formatCrypto(btcAmount, 8) : '0.00000000' }}
           </div>
-          <div class="card__meta muted">
-            Rate:
-            <span v-if="btcRate != null">1 USD = {{ formatCrypto(btcRate, 10) }} BTC</span>
-            <span v-else>—</span>
+          <div class="mt-2 text-xs text-slate-600">
+            <span class="font-medium text-slate-700">Rate:</span>
+            <span v-if="btcRate != null"> 1 USD = {{ formatCrypto(btcRate, 10) }} BTC</span>
+            <span v-else> —</span>
           </div>
         </article>
 
-        <article class="card">
-          <div class="card__top">
+        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
             <div>
-              <div class="card__kicker">ETHEREUM</div>
-              <div class="card__symbol">ETH</div>
+              <div class="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
+                ETHEREUM
+              </div>
+              <div class="mt-1 text-base font-semibold text-slate-900">ETH</div>
             </div>
-            <div class="chip chip--eth">30%</div>
+            <div
+              class="rounded-full border border-blue-200/80 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-900"
+            >
+              30%
+            </div>
           </div>
 
-          <div class="card__value">
+          <div class="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
             {{ canCalculate ? formatCrypto(ethAmount, 6) : '0.000000' }}
           </div>
-          <div class="card__meta muted">
-            Rate:
-            <span v-if="ethRate != null">1 USD = {{ formatCrypto(ethRate, 10) }} ETH</span>
-            <span v-else>—</span>
+          <div class="mt-2 text-xs text-slate-600">
+            <span class="font-medium text-slate-700">Rate:</span>
+            <span v-if="ethRate != null"> 1 USD = {{ formatCrypto(ethRate, 10) }} ETH</span>
+            <span v-else> —</span>
           </div>
         </article>
       </section>
 
-      <footer class="panel__footer muted">
+      <footer
+        class="mt-4 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500"
+      >
         <span v-if="isLoading">Updating rates…</span>
         <span v-else-if="errorMessage">Could not load rates: {{ errorMessage }}</span>
         <span v-else>Rates update roughly every 45 seconds.</span>
