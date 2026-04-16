@@ -2,12 +2,34 @@
 import { ref, computed } from 'vue'
 import { useExchangeRates } from './composables/useExchangeRates'
 import { parseUsd, formatCrypto } from './utils/numberUtils'
+import MajorAllocationCard from './components/MajorAllocationCard.vue'
 
 // Raw allocation input from the user as a string
 const usdInput = ref('')
 
+const asset70 = ref('BTC')
+const asset30 = ref('ETH')
+
 // Live exchange rates + loading/error state (45 seconds interval)
-const { btcRate, ethRate, isLoading, errorMessage } = useExchangeRates()
+const { usdRates, isLoading, errorMessage } = useExchangeRates({ asset70, asset30 })
+
+function rateFor(ticker) {
+  const normalizedTicker = String(ticker ?? '').toUpperCase()
+  const unitsPerOneUsd = usdRates.value?.[normalizedTicker]
+  return Number.isFinite(unitsPerOneUsd) ? unitsPerOneUsd : null
+}
+
+const assetOptions = computed(() => {
+  const rates = usdRates.value || {}
+  return Object.keys(rates)
+    .map((ticker) => String(ticker).toUpperCase())
+    .filter((ticker) => ticker && ticker !== 'USD') // Filter out USD
+    .sort((tickerA, tickerB) => tickerA.localeCompare(tickerB))
+    .map((ticker) => ({
+      ticker,
+      available: Number.isFinite(rates[ticker]),
+    }))
+})
 
 // ----- Derived state -----
 const parsed = computed(() => parseUsd(usdInput.value))
@@ -30,32 +52,56 @@ const usdAmount = computed(() =>
   parsed.value.kind === 'valid' ? parsed.value.value : null
 )
 
+const rate70 = computed(() => rateFor(asset70.value))
+const rate30 = computed(() => rateFor(asset30.value))
+
+const selectedTheSameAsset = computed(() => asset70.value === asset30.value)
+
 const canCalculate = computed(() => {
   return (
     usdAmount.value != null &&
-    btcRate.value != null &&
-    ethRate.value != null &&
-    !isLoading.value &&
-    !errorMessage.value
+    rate70.value != null &&
+    rate30.value != null &&
+    !selectedTheSameAsset.value
   )
 })
 
-const btcUsdPortion = computed(() =>
+const usdPortion70 = computed(() =>
   usdAmount.value == null ? null : usdAmount.value * 0.7
 )
-const ethUsdPortion = computed(() =>
+const usdPortion30 = computed(() =>
   usdAmount.value == null ? null : usdAmount.value * 0.3
 )
 
-const btcAmount = computed(() => {
-  if (btcUsdPortion.value == null || btcRate.value == null) return null
-  return btcUsdPortion.value * btcRate.value
+const amount70 = computed(() => {
+  if (usdPortion70.value == null || rate70.value == null) return null
+  return usdPortion70.value * rate70.value
 })
 
-const ethAmount = computed(() => {
-  if (ethUsdPortion.value == null || ethRate.value == null) return null
-  return ethUsdPortion.value * ethRate.value
+const amount30 = computed(() => {
+  if (usdPortion30.value == null || rate30.value == null) return null
+  return usdPortion30.value * rate30.value
 })
+
+const amountText70 = computed(() =>
+  canCalculate.value && amount70.value != null
+    ? formatCrypto(amount70.value, 8)
+    : '0.00000000'
+)
+
+const amountText30 = computed(() =>
+  canCalculate.value && amount30.value != null
+    ? formatCrypto(amount30.value, 8)
+    : '0.00000000'
+)
+
+const rateText70 = computed(() =>
+  rate70.value == null ? '—' : `1 USD = ${formatCrypto(rate70.value, 10)} ${asset70.value}`
+)
+
+const rateText30 = computed(() =>
+  rate30.value == null ? '—' : `1 USD = ${formatCrypto(rate30.value, 10)} ${asset30.value}`
+)
 </script>
 
 <template>
@@ -72,7 +118,8 @@ const ethAmount = computed(() => {
             Asset allocation calculator
           </h1>
           <p class="mt-2 text-sm text-slate-600">
-            Enter a USD amount. This splits it 70% BTC and 30% ETH using Coinbase exchange rates.
+            Enter a USD amount. This splits it 70% / 30% across two assets you pick from Coinbase’s
+            returned rate list.
           </p>
         </div>
       </header>
@@ -109,64 +156,48 @@ const ethAmount = computed(() => {
         </p>
       </section>
 
+      <div
+        v-if="selectedTheSameAsset"
+        class="mt-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+        role="status"
+        aria-live="polite"
+      >
+        You selected the same asset for both allocations. Pick two different tickers to compute a
+        70% / 30% split.
+      </div>
+
       <section class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2" aria-label="Allocation outputs">
-        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <div class="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
-                BITCOIN
-              </div>
-              <div class="mt-1 text-base font-semibold text-slate-900">BTC</div>
-            </div>
-            <div
-              class="rounded-full border border-amber-200/80 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-900"
-            >
-              70%
-            </div>
-          </div>
+        <MajorAllocationCard
+          :percent="70"
+          accent="amber"
+          input-id="asset-70"
+          label="70% asset"
+          v-model="asset70"
+          :assets="assetOptions"
+          :amount-text="amountText70"
+          :rate-text="rateText70"
+        />
 
-          <div class="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
-            {{ canCalculate ? formatCrypto(btcAmount, 8) : '0.00000000' }}
-          </div>
-          <div class="mt-2 text-xs text-slate-600">
-            <span class="font-medium text-slate-700">Rate:</span>
-            <span v-if="btcRate != null"> 1 USD = {{ formatCrypto(btcRate, 10) }} BTC</span>
-            <span v-else> —</span>
-          </div>
-        </article>
-
-        <article class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <div class="text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
-                ETHEREUM
-              </div>
-              <div class="mt-1 text-base font-semibold text-slate-900">ETH</div>
-            </div>
-            <div
-              class="rounded-full border border-blue-200/80 bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-900"
-            >
-              30%
-            </div>
-          </div>
-
-          <div class="mt-4 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
-            {{ canCalculate ? formatCrypto(ethAmount, 6) : '0.000000' }}
-          </div>
-          <div class="mt-2 text-xs text-slate-600">
-            <span class="font-medium text-slate-700">Rate:</span>
-            <span v-if="ethRate != null"> 1 USD = {{ formatCrypto(ethRate, 10) }} ETH</span>
-            <span v-else> —</span>
-          </div>
-        </article>
+        <MajorAllocationCard
+          :percent="30"
+          accent="blue"
+          input-id="asset-30"
+          label="30% asset"
+          v-model="asset30"
+          :assets="assetOptions"
+          :amount-text="amountText30"
+          :rate-text="rateText30"
+        />
       </section>
 
       <footer
         class="mt-4 text-center text-[11px] font-medium uppercase tracking-[0.14em] text-slate-500"
       >
-        <span v-if="isLoading">Updating rates…</span>
-        <span v-else-if="errorMessage">Could not load rates: {{ errorMessage }}</span>
-        <span v-else>Rates update roughly every 45 seconds.</span>
+        <div v-if="isLoading">Updating rates…</div>
+        <div v-else>Rates update roughly every 45 seconds.</div>
+        <div v-if="errorMessage" class="mt-2 normal-case text-xs font-normal text-red-700">
+          {{ errorMessage }}
+        </div>
       </footer>
     </section>
   </main>
